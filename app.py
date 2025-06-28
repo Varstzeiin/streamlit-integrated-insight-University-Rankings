@@ -8,8 +8,8 @@ import joblib
 # ------------------------
 # Load data dan model
 # ------------------------
-df_raw = pd.read_csv("D:/Bootcamp-Offline-Bdg/Offline_Bootcamp[14]-Streamlit-Web_Rank_Univ/data_gabungan_lengkap.csv")
-df_2026 = pd.read_csv("D:/Bootcamp-Offline-Bdg/Offline_Bootcamp[14]-Streamlit-Web_Rank_Univ/New_overscore_all.csv")
+df_raw = pd.read_csv("data_gabungan_lengkap.csv")
+df_2026 = pd.read_csv("New_overscore_all.csv")
 
 # Konversi data wide -> long untuk keperluan Dashboard dan Dataset
 score_cols = [col for col in df_raw.columns if "overall_score_" in col]
@@ -31,7 +31,7 @@ df_long["year"] = df_long["year"].str.extract(r"(\d{4})").astype(int)
 
 # Load model prediksi
 try:
-    model = joblib.load("D:/Bootcamp-Offline-Bdg/Offline_Bootcamp[14]-Streamlit-Web_Rank_Univ/model_2026.pkl")
+    model = joblib.load("model_2026.pkl")
 except:
     model = None
 
@@ -163,3 +163,6 @@ elif menu == "Tampilan Dataset":
 
     csv = df_filtered.to_csv(index=False).encode("utf-8")
     st.download_button("📥 Unduh Data (CSV)", csv, file_name="filtered_university_data.csv", mime="text/csv")
+
+# menjalankannya 
+# streamlit run D:\Bootcamp-Offline-Bdg\Offline_Bootcamp[14]-Streamlit-Web_Rank_Univ\app.py
