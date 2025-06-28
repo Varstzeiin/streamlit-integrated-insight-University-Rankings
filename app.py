@@ -31,7 +31,7 @@ df_long["year"] = df_long["year"].str.extract(r"(\d{4})").astype(int)
 
 # Load model prediksi
 try:
-    model = joblib.load("D:/Bootcamp-Offline-Bdg/Offline_Bootcamp[14]-Streamlit-Web_Rank_Univ/model_2026.pkl")
+    model = joblib.load("model_2026.pkl")
 except:
     model = None
 
