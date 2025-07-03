@@ -31,7 +31,6 @@ df_long = pd.melt(
 )
 df_long["year"] = df_long["year"].str.extract(r"(\d{4})").astype(int)
 
-# Load model prediksi
 model = None
 try:
     if os.path.exists(MODEL_PATH):
@@ -40,8 +39,11 @@ except Exception as e:
     st.error(f"❌ Gagal load model: {str(e)}")
 
 # ------------------------
-# Sidebar: Menu Navigasi
+# Sidebar
 # ------------------------
+st.sidebar.header("Upload Data CSV untuk Prediksi (Opsional)")
+uploaded_file = st.sidebar.file_uploader("Unggah file CSV (wajib kolom: institution, academic, employer, citations, faculty_student)", type=["csv"])
+
 menu = st.sidebar.radio("Pilih Menu", ["Home", "Dashboard", "Prediksi", "Pergeseran Peringkat", "Tampilan Dataset"])
 
 # ------------------------
@@ -49,9 +51,7 @@ menu = st.sidebar.radio("Pilih Menu", ["Home", "Dashboard", "Prediksi", "Pergese
 # ------------------------
 if menu == "Home":
     st.title("🌐 University Rankings & Performance Dashboard")
-    
     st.image("Kampus.png", use_column_width=True, caption="Ilustrasi Kampus dan Peringkat")
-
     st.markdown("""
     ## Latar Belakang  
     Aplikasi ini dikembangkan untuk menganalisis dan memprediksi peringkat universitas global berdasarkan indikator kinerja akademik dan riset.  
@@ -71,8 +71,6 @@ if menu == "Home":
     - **Employer Reputation Score:** Survei pemberi kerja terkait lulusan terbaik.  
     - **Citations per Faculty:** Jumlah sitasi publikasi ilmiah dibagi jumlah staf pengajar.  
     - **Faculty Student Score:** Rasio jumlah staf pengajar terhadap mahasiswa.  
-    
-    Semua skor diperoleh dari data QS World University Rankings dan sumber data publik sejenis yang mempublikasikan kinerja universitas.
     """)
 
 # ------------------------
@@ -80,10 +78,8 @@ if menu == "Home":
 # ------------------------
 elif menu == "Dashboard":
     st.title("📊 Dashboard Peringkat Universitas")
-
     st.sidebar.header("Filter Tahun")
     year = st.sidebar.selectbox("Pilih Tahun", sorted(df_long["year"].unique(), reverse=True))
-
     df_year = df_long[df_long["year"] == year].copy()
     df_year = df_year.sort_values(by="overall_score", ascending=False).reset_index(drop=True)
     df_year["Rank"] = df_year["overall_score"].rank(ascending=False, method="min").astype(int)
@@ -94,13 +90,7 @@ elif menu == "Dashboard":
 
     st.subheader(f"🏆 Top 10 Universitas Tahun {year}")
     top10 = df_year.head(10)
-    fig = px.bar(top10,
-                 x="overall_score",
-                 y="institution",
-                 orientation="h",
-                 color="overall_score",
-                 color_continuous_scale="viridis",
-                 title=f"10 Besar Universitas Tahun {year}")
+    fig = px.bar(top10, x="overall_score", y="institution", orientation="h", color="overall_score", color_continuous_scale="viridis")
     fig.update_layout(yaxis=dict(categoryorder='total ascending'))
     st.plotly_chart(fig, use_container_width=True)
 
@@ -108,8 +98,7 @@ elif menu == "Dashboard":
     avg_score_2026 = df_2026["overall_score_2026"].mean()
     avg_score = df_long.groupby("year")["overall_score"].mean().reset_index()
     avg_score = pd.concat([avg_score, pd.DataFrame({"year": [2026], "overall_score": [avg_score_2026]})], ignore_index=True)
-    fig2 = px.line(avg_score, x="year", y="overall_score", markers=True,
-                   title="Tren Rata-rata Overall Score per Tahun")
+    fig2 = px.line(avg_score, x="year", y="overall_score", markers=True)
     st.plotly_chart(fig2, use_container_width=True)
 
 # ------------------------
@@ -117,74 +106,81 @@ elif menu == "Dashboard":
 # ------------------------
 elif menu == "Prediksi":
     st.title("🧠 Prediksi Overall Score Universitas Baru")
-
     if model is None:
         st.error("Model belum tersedia. Pastikan model_2026.pkl berada di direktori.")
     else:
         with st.form("form_prediksi"):
             st.subheader("📥 Masukkan Nilai Fitur:")
-
             nama_kampus = st.text_input("Nama Universitas (contoh: ITB / dummy)")
-
             col1, col2 = st.columns(2)
             with col1:
-                academic = st.number_input("Academic Reputation Score (Range 0-100)", 0.0, 100.0, step=0.1)
-                employer = st.number_input("Employer Reputation Score (Range 0-100)", 0.0, 100.0, step=0.1)
+                academic = st.number_input("Academic Reputation Score (0-100)", 0.0, 100.0, step=0.1)
+                employer = st.number_input("Employer Reputation Score (0-100)", 0.0, 100.0, step=0.1)
             with col2:
-                citations = st.number_input("Citations per Faculty (Range 0-100)", 0.0, 100.0, step=0.1)
-                faculty_student = st.number_input("Faculty Student Score (Range 0-100)", 0.0, 100.0, step=0.1)
-
+                citations = st.number_input("Citations per Faculty (0-100)", 0.0, 100.0, step=0.1)
+                faculty_student = st.number_input("Faculty Student Score (0-100)", 0.0, 100.0, step=0.1)
             submitted = st.form_submit_button("🔮 Prediksi Skor")
 
-            if submitted:
-                if nama_kampus.strip() == "":
-                    st.warning("⚠ Silakan masukkan nama universitas.")
+            if submitted and nama_kampus.strip():
+                fitur = np.array([[academic, employer, citations, faculty_student]])
+                prediksi = model.predict(fitur)[0]
+                df_temp = pd.concat([df_2026, pd.DataFrame({"institution": [nama_kampus], "overall_score_2026": [prediksi]})], ignore_index=True)
+                df_temp["rank_prediksi"] = df_temp["overall_score_2026"].rank(ascending=False, method="min").astype(int)
+                rank_pred = df_temp.loc[df_temp["institution"] == nama_kampus, "rank_prediksi"].values[0]
+                st.success(f"🎯 Prediksi Overall Score: **{prediksi:.2f}**")
+                st.info(f"🏅 Perkiraan Peringkat: **#{rank_pred} dari {len(df_temp)} universitas**")
+                st.markdown(f"🎓 **{nama_kampus}** diprediksi memperoleh Overall Score **{prediksi:.2f}** dan berada di peringkat **{rank_pred}** di tahun 2026.")
+            elif submitted:
+                st.warning("⚠ Silakan masukkan nama universitas.")
+
+        # Handle upload CSV
+        if uploaded_file is not None:
+            try:
+                df_uploaded = pd.read_csv(uploaded_file)
+                st.subheader("📄 Data yang Diunggah")
+                st.dataframe(df_uploaded)
+                required_cols = ['institution', 'academic', 'employer', 'citations', 'faculty_student']
+                if all(col in df_uploaded.columns for col in required_cols):
+                    fitur_batch = df_uploaded[['academic', 'employer', 'citations', 'faculty_student']].values
+                    prediksi_batch = model.predict(fitur_batch)
+                    df_uploaded["Prediksi Overall Score"] = prediksi_batch
+                    df_temp_batch = df_2026.copy()
+                    for _, row in df_uploaded.iterrows():
+                        df_temp_batch = pd.concat([df_temp_batch, pd.DataFrame({
+                            "institution": [row["institution"]],
+                            "overall_score_2026": [row["Prediksi Overall Score"]]
+                        })], ignore_index=True)
+                    df_temp_batch["rank_prediksi"] = df_temp_batch["overall_score_2026"].rank(ascending=False, method="min").astype(int)
+                    ranks = []
+                    for row in df_uploaded.itertuples():
+                        rank_now = df_temp_batch.loc[df_temp_batch["institution"] == row.institution, "rank_prediksi"].values[0]
+                        ranks.append(rank_now)
+                    df_uploaded["Perkiraan Peringkat"] = ranks
+                    st.success("✅ Prediksi batch selesai!")
+                    st.dataframe(df_uploaded)
+                    csv_pred = df_uploaded.to_csv(index=False).encode("utf-8")
+                    st.download_button("📥 Unduh Hasil Prediksi (CSV)", csv_pred, file_name="prediksi_batch.csv", mime="text/csv")
                 else:
-                    fitur = np.array([[academic, employer, citations, faculty_student]])
-                    prediksi = model.predict(fitur)[0]
-
-                    df_temp = df_2026.copy()
-                    df_temp = pd.concat([df_temp, pd.DataFrame({
-                        "institution": [nama_kampus],
-                        "overall_score_2026": [prediksi]
-                    })], ignore_index=True)
-
-                    df_temp["rank_prediksi"] = df_temp["overall_score_2026"].rank(ascending=False, method="min").astype(int)
-                    rank_pred = df_temp.loc[df_temp["institution"] == nama_kampus, "rank_prediksi"].values[0]
-
-                    st.success(f"🎯 Prediksi Overall Score: **{prediksi:.2f}**")
-                    st.info(f"🏅 Perkiraan Peringkat: **#{rank_pred} dari {len(df_temp)} universitas**")
-                    st.markdown(f"🎓 **{nama_kampus}** diprediksi memperoleh Overall Score **{prediksi:.2f}** dan berada di peringkat **{rank_pred}** di tahun 2026.")
+                    st.warning(f"⚠ File wajib punya kolom: {', '.join(required_cols)}")
+            except Exception as e:
+                st.error(f"❌ Gagal memproses file: {str(e)}")
 
 # ------------------------
 # MENU PERGESERAN PERINGKAT
 # ------------------------
 elif menu == "Pergeseran Peringkat":
     st.title("📊 Pergeseran Peringkat Universitas Top 10")
-    st.markdown("""
-        Visualisasi berikut memperlihatkan perbandingan peringkat universitas terbaik dari tahun ke tahun.
-        Pilih tahun untuk melihat Top 10 berdasarkan skor keseluruhan.
-    """)
-
     pilihan = st.selectbox("Pilih Tahun", [2023, 2025, 2026])
-
     if pilihan == 2026:
         df_top = df_2026.sort_values(by="overall_score_2026", ascending=False).head(10)
         kolom_score = "overall_score_2026"
     elif pilihan == 2025:
         df_top = df_raw.sort_values(by="overall_score_2025", ascending=False).head(10)
         kolom_score = "overall_score_2025"
-    elif pilihan == 2023:
+    else:
         df_top = df_raw.sort_values(by="overall_score_2023", ascending=False).head(10)
         kolom_score = "overall_score_2023"
-
-    fig_top = px.bar(df_top,
-                     x=kolom_score,
-                     y="institution",
-                     orientation="h",
-                     color=kolom_score,
-                     color_continuous_scale="blues",
-                     title=f"Top 10 Universitas Berdasarkan Overall Score Tahun {pilihan}")
+    fig_top = px.bar(df_top, x=kolom_score, y="institution", orientation="h", color=kolom_score, color_continuous_scale="blues")
     fig_top.update_layout(yaxis=dict(categoryorder='total ascending'))
     st.plotly_chart(fig_top, use_container_width=True)
 
@@ -193,11 +189,9 @@ elif menu == "Pergeseran Peringkat":
 # ------------------------
 elif menu == "Tampilan Dataset":
     st.title("📄 Dataset Peringkat Universitas (2018–2026)")
-
     st.sidebar.header("Filter Data")
     years = st.sidebar.multiselect("Pilih Tahun", sorted(df_long["year"].unique()) + [2026], default=sorted(df_long["year"].unique()) + [2026])
     institutions = st.sidebar.multiselect("Pilih Universitas", sorted(df_raw["institution"].unique()))
-
     df_filtered = df_long[df_long["year"].isin([y for y in years if y != 2026])]
     if 2026 in years:
         df_2026_temp = df_2026.copy()
@@ -205,12 +199,9 @@ elif menu == "Tampilan Dataset":
         df_2026_temp = df_2026_temp.rename(columns={"overall_score_2026": "overall_score"})
         df_2026_temp = df_2026_temp[["institution", "year", "overall_score"]]
         df_filtered = pd.concat([df_filtered, df_2026_temp], ignore_index=True)
-
     if institutions:
         df_filtered = df_filtered[df_filtered["institution"].isin(institutions)]
-
     st.markdown(f"Menampilkan **{len(df_filtered)}** baris hasil filter.")
     st.dataframe(df_filtered, use_container_width=True)
-
     csv = df_filtered.to_csv(index=False).encode("utf-8")
     st.download_button("📥 Unduh Data (CSV)", csv, file_name="filtered_university_data.csv", mime="text/csv")
