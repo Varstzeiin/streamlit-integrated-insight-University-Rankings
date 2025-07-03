@@ -66,19 +66,24 @@ if menu == "Home":
     st.image("Kampus.png", use_column_width=True, caption="Ilustrasi Kampus dan Peringkat")
     st.markdown("""
     ## Latar Belakang  
-    Aplikasi ini untuk analisis & prediksi peringkat universitas global.  
-    Data sumber dari QS dan dataset publik lainnya (2018–2026).
-
+    Aplikasi ini dikembangkan untuk menganalisis dan memprediksi peringkat universitas global berdasarkan indikator kinerja akademik dan riset.  
+    Hasil analisis mendukung pengambilan keputusan strategis dalam penyusunan program beasiswa, kolaborasi, outsourcing, serta pengembangan talenta masa depan.  
+    
     ## Tujuan  
-    - Prediksi peringkat 2025-2026  
-    - Insight untuk strategi kolaborasi & talenta  
-
-    ## Indikator  
-    - Academic & Employer Reputation  
-    - Citations per Faculty  
-    - Faculty Student Ratio  
+    - Menyusun prediksi peringkat universitas global untuk 2025 dan 2026.  
+    - Menggali insight utama untuk mendukung strategi kolaborasi dan rekrutmen.
+    
+    ## Sumber & Transformasi Data  
+    Data berasal dari peringkat universitas global tahun 2018, 2019, 2021, 2023, 2024, dan 2025.  
+    Data memuat skor keseluruhan, reputasi akademik & pemberi kerja, rasio dosen-mahasiswa, intensitas riset, hingga keberadaan mahasiswa/staf internasional.  
+    Data terbaru digunakan untuk validasi & proyeksi.
+    
+    ## Indikator Penilaian  
+    - **Academic Reputation Score:** Survei global terhadap akademisi tentang kualitas institusi.  
+    - **Employer Reputation Score:** Survei pemberi kerja terkait lulusan terbaik.  
+    - **Citations per Faculty:** Jumlah sitasi publikasi ilmiah dibagi jumlah staf pengajar.  
+    - **Faculty Student Score:** Rasio jumlah staf pengajar terhadap mahasiswa.  
     """)
-
 # ------------------------
 # MENU DASHBOARD
 # ------------------------
