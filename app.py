@@ -209,5 +209,5 @@ elif menu == "Prediksi":
                 # Tampilkan hasil
                     st.success(f"🎯 Prediksi Overall Score: *{prediksi:.2f}*")
                     st.info(f"🏅 Perkiraan Peringkat: *#{rank_pred} dari {len(df_temp)} universitas*")
-                    st.markdown(f"🎓 *{nama_kampus}* diprediksi memperoleh Overall Score *{prediksi:.2f}* dan berada di peringkat *{rank_pred}* di tahun 2026.")
+                    st.markdown(f"🎓 **{nama_kampus}** diprediksi memperoleh Overall Score **{prediksi:.2f}** dan berada di peringkat **{rank_pred}** di tahun 2026.")
 
