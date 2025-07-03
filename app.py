@@ -206,5 +206,8 @@ elif menu == "Prediksi":
                     })], ignore_index=True)
                     df_temp["rank_prediksi"] = df_temp["overall_score_2026"].rank(ascending=False, method="min").astype(int)
                     rank_pred = df_temp.loc[df_temp["institution"] == nama_kampus, "rank_prediksi"].values[0]
-                    st.success(f"🎯 Prediksi Overall Score: {prediksi:.2f}")
-                    st.info(f"🏅 Perkiraan Peringkat: #{rank_pred} dari {len(df_temp)} universitas")
+                # Tampilkan hasil
+                    st.success(f"🎯 Prediksi Overall Score: *{prediksi:.2f}*")
+                    st.info(f"🏅 Perkiraan Peringkat: *#{rank_pred} dari {len(df_temp)} universitas*")
+                    st.markdown(f"🎓 *{nama_kampus}* diprediksi memperoleh Overall Score *{prediksi:.2f}* dan berada di peringkat *{rank_pred}* di tahun 2026.")
+
