@@ -94,7 +94,7 @@ elif menu == "Prediksi":
         with st.form("form_prediksi"):
             st.subheader("📥 Masukkan Nilai Fitur:")
 
-            nama_kampus = st.text_input("Nama Universitas (dummy / contoh: ITB)")
+            nama_kampus = st.text_input("Nama Universitas (contoh: ITB / dummy)")
 
             col1, col2 = st.columns(2)
             with col1:
@@ -113,7 +113,7 @@ elif menu == "Prediksi":
                     fitur = np.array([[academic, employer, citations, faculty_student]])
                     prediksi = model.predict(fitur)[0]
 
-                    # Gabungkan dengan data 2026 untuk hitung ranking
+                    # Gabung data 2026 + prediksi
                     df_temp = df_2026.copy()
                     df_temp = pd.concat([df_temp, pd.DataFrame({
                         "institution": [nama_kampus],
@@ -122,11 +122,13 @@ elif menu == "Prediksi":
 
                     df_temp["rank_prediksi"] = df_temp["overall_score_2026"].rank(ascending=False, method="min").astype(int)
 
-                    # Ambil rank universitas inputan
-                    rank_kampus = df_temp.loc[df_temp["institution"] == nama_kampus, "rank_prediksi"].values[0]
+                    # Ambil rank prediksi
+                    rank_pred = df_temp.loc[df_temp["institution"] == nama_kampus, "rank_prediksi"].values[0]
 
-                    st.success(f"🎓 **{nama_kampus}** diprediksi memperoleh Overall Score: **{prediksi:.2f}** dan berada di peringkat **{rank_kampus}** (2026)")
-
+                    # Tampilkan hasil
+                    st.success(f"🎯 Prediksi Overall Score: **{prediksi:.2f}**")
+                    st.info(f"🏅 Perkiraan Peringkat: **#{rank_pred} dari {len(df_temp)} universitas**")
+                    st.markdown(f"🎓 **{nama_kampus}** diprediksi memperoleh Overall Score **{prediksi:.2f}** dan berada di peringkat **{rank_pred}** di tahun 2026.")
 
 # ------------------------
 # MENU 3: PERGESERAN PERINGKAT
