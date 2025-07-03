@@ -121,29 +121,49 @@ elif menu == "Dashboard":
 # ------------------------
 elif menu == "Prediksi":
     st.title("🧠 Prediksi Overall Score Universitas Baru")
+
     if model is None:
-        st.error("⚠ Model belum tersedia.")
+        st.error("Model belum tersedia. Pastikan model_2026.pkl berada di direktori.")
     else:
         with st.form("form_prediksi"):
-            nama = st.text_input("Nama Universitas")
-            col1, col2 = st.columns(2)
-            academic = col1.number_input("Academic Reputation (0-100)", 0.0, 100.0, step=0.1)
-            employer = col1.number_input("Employer Reputation (0-100)", 0.0, 100.0, step=0.1)
-            citations = col2.number_input("Citations per Faculty (0-100)", 0.0, 100.0, step=0.1)
-            faculty_student = col2.number_input("Faculty Student (0-100)", 0.0, 100.0, step=0.1)
-            submit = st.form_submit_button("Prediksi")
+            st.subheader("📥 Masukkan Nilai Fitur:")
 
-        if submit:
-            if nama.strip() == "":
-                st.warning("Masukkan nama universitas!")
-            else:
-                fitur = np.array([[academic, employer, citations, faculty_student]])
-                pred = model.predict(fitur)[0]
-                df_temp = df_2026.copy()
-                df_temp = pd.concat([df_temp, pd.DataFrame({"institution": [nama], "overall_score_2026": [pred]})], ignore_index=True)
-                df_temp["rank_prediksi"] = df_temp["overall_score_2026"].rank(ascending=False, method="min").astype(int)
-                rank = df_temp.loc[df_temp["institution"] == nama, "rank_prediksi"].values[0]
-                st.success(f"🎯 Skor: {pred:.2f} | Ranking: #{rank}")
+            nama_kampus = st.text_input("Nama Universitas (contoh: ITB / dummy)")
+
+            col1, col2 = st.columns(2)
+            with col1:
+                academic = st.number_input("Academic Reputation Score (Range 0-100)", 0.0, 100.0, step=0.1)
+                employer = st.number_input("Employer Reputation Score (Range 0-100)", 0.0, 100.0, step=0.1)
+            with col2:
+                citations = st.number_input("Citations per Faculty (Range 0-100)", 0.0, 100.0, step=0.1)
+                faculty_student = st.number_input("Faculty Student Score (Range 0-100)", 0.0, 100.0, step=0.1)
+
+            submitted = st.form_submit_button("🔮 Prediksi Skor")
+
+            if submitted:
+                if nama_kampus.strip() == "":
+                    st.warning("⚠ Silakan masukkan nama universitas.")
+                else:
+                    fitur = np.array([[academic, employer, citations, faculty_student]])
+                    prediksi = model.predict(fitur)[0]
+
+                    # Gabung data 2026 + prediksi
+                    df_temp = df_2026.copy()
+                    df_temp = pd.concat([df_temp, pd.DataFrame({
+                        "institution": [nama_kampus],
+                        "overall_score_2026": [prediksi]
+                    })], ignore_index=True)
+
+                    df_temp["rank_prediksi"] = df_temp["overall_score_2026"].rank(ascending=False, method="min").astype(int)
+
+                    # Ambil rank prediksi
+                    rank_pred = df_temp.loc[df_temp["institution"] == nama_kampus, "rank_prediksi"].values[0]
+
+                    # Tampilkan hasil
+                    st.success(f"🎯 Prediksi Overall Score: **{prediksi:.2f}**")
+                    st.info(f"🏅 Perkiraan Peringkat: **#{rank_pred} dari {len(df_temp)} universitas**")
+                    st.markdown(f"🎓 **{nama_kampus}** diprediksi memperoleh Overall Score **{prediksi:.2f}** dan berada di peringkat **{rank_pred}** di tahun 2026.")
+
 
 # ------------------------
 # MENU PERGESERAN
