@@ -99,12 +99,12 @@ elif menu == "Prediksi":
             col1, col2 = st.columns(2)
 
             with col1:
-                academic = st.number_input("Academic Reputation Score", 0.0, 100.0, step=0.1)
-                employer = st.number_input("Employer Reputation Score", 0.0, 100.0, step=0.1)
+                academic = st.number_input("Academic Reputation Score (Range 0-100)", 0.0, 100.0, step=0.1)
+                employer = st.number_input("Employer Reputation Score (Range 0-100)", 0.0, 100.0, step=0.1)
 
             with col2:
-                citations = st.number_input("Citations per Faculty", 0.0, 100.0, step=0.1)
-                faculty_student = st.number_input("Faculty Student Score", 0.0, 100.0, step=0.1)
+                citations = st.number_input("Citations per Faculty (Range 0-100)", 0.0, 100.0, step=0.1)
+                faculty_student = st.number_input("Faculty Student Score (Range 0-100)", 0.0, 100.0, step=0.1)
 
             submitted = st.form_submit_button("🔮 Prediksi Skor")
 
