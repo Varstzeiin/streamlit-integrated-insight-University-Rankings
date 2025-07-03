@@ -37,12 +37,12 @@ model = None  # Default None
 try:
     if os.path.exists(MODEL_PATH):
         model = joblib.load(MODEL_PATH)
-        st.success(f"✅ Model berhasil dimuat dari: {MODEL_PATH}")
+        # Tidak menampilkan st.success agar UI bersih
+        model_status_msg = ""  # tidak perlu pesan sukses
     else:
-        st.error(f"❌ File model tidak ditemukan di: {MODEL_PATH}")
+        model_status_msg = f"❌ File model tidak ditemukan di: `{MODEL_FILENAME}`"
 except Exception as e:
-    st.error(f"❌ Gagal load model di {MODEL_PATH}: {e}")
-
+    model_status_msg = f"❌ Gagal load model: {str(e)}"
 # ------------------------
 # Sidebar: Menu Navigasi
 # ------------------------
