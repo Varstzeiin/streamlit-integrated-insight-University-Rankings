@@ -30,10 +30,15 @@ df_long = pd.melt(
 df_long["year"] = df_long["year"].str.extract(r"(\d{4})").astype(int)
 
 # Load model prediksi
+model = None  # Default None
 try:
-    model = joblib.load("model_2026.pkl")
-except:
-    model = None
+    if os.path.exists(MODEL_PATH):
+        model = joblib.load(MODEL_PATH)
+        st.success(f"✅ Model berhasil dimuat dari: {MODEL_PATH}")
+    else:
+        st.error(f"❌ File model tidak ditemukan di: {MODEL_PATH}")
+except Exception as e:
+    st.error(f"❌ Gagal load model di {MODEL_PATH}: {e}")
 
 # ------------------------
 # Sidebar: Menu Navigasi
