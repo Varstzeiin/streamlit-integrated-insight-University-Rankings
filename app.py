@@ -92,40 +92,41 @@ elif menu == "Prediksi":
         st.error("Model belum tersedia. Pastikan model_2026.pkl berada di direktori.")
     else:
         with st.form("form_prediksi"):
-            st.subheader("📥 Masukkan Data Universitas Baru:")
+            st.subheader("📥 Masukkan Nilai Fitur:")
 
-            nama_uni = st.text_input("Nama Universitas (dummy saja)")
+            nama_kampus = st.text_input("Nama Universitas (dummy / contoh: ITB)")
+
             col1, col2 = st.columns(2)
-
             with col1:
-                academic = st.number_input("Academic Reputation Score (0-100)", 0.0, 100.0, step=0.1)
-                employer = st.number_input("Employer Reputation Score (0-100)", 0.0, 100.0, step=0.1)
-
+                academic = st.number_input("Academic Reputation Score (Range 0-100)", 0.0, 100.0, step=0.1)
+                employer = st.number_input("Employer Reputation Score (Range 0-100)", 0.0, 100.0, step=0.1)
             with col2:
-                citations = st.number_input("Citations per Faculty (0-100)", 0.0, 100.0, step=0.1)
-                faculty_student = st.number_input("Faculty Student Score (0-100)", 0.0, 100.0, step=0.1)
+                citations = st.number_input("Citations per Faculty (Range 0-100)", 0.0, 100.0, step=0.1)
+                faculty_student = st.number_input("Faculty Student Score (Range 0-100)", 0.0, 100.0, step=0.1)
 
             submitted = st.form_submit_button("🔮 Prediksi Skor")
 
             if submitted:
-                fitur = np.array([[academic, employer, citations, faculty_student]])
-                prediksi = model.predict(fitur)[0]
+                if nama_kampus.strip() == "":
+                    st.warning("⚠ Silakan masukkan nama universitas.")
+                else:
+                    fitur = np.array([[academic, employer, citations, faculty_student]])
+                    prediksi = model.predict(fitur)[0]
 
-                # Gabung dengan data 2026 untuk hitung rank
-                df_temp = df_2026.copy()
-                df_temp = pd.concat([
-                    df_temp,
-                    pd.DataFrame({
-                        "institution": [nama_uni if nama_uni else "Universitas Baru"],
+                    # Gabungkan dengan data 2026 untuk hitung ranking
+                    df_temp = df_2026.copy()
+                    df_temp = pd.concat([df_temp, pd.DataFrame({
+                        "institution": [nama_kampus],
                         "overall_score_2026": [prediksi]
-                    })
-                ], ignore_index=True)
+                    })], ignore_index=True)
 
-                df_temp["Rank_Prediksi"] = df_temp["overall_score_2026"].rank(ascending=False, method="min").astype(int)
-                rank_pred = df_temp[df_temp["institution"] == (nama_uni if nama_uni else "Universitas Baru")]["Rank_Prediksi"].values[0]
+                    df_temp["rank_prediksi"] = df_temp["overall_score_2026"].rank(ascending=False, method="min").astype(int)
 
-                st.success(f"🎯 Prediksi Overall Score: **{prediksi:.2f}**")
-                st.info(f"🏅 Perkiraan Peringkat: **#{rank_pred} dari {len(df_temp)} universitas**")
+                    # Ambil rank universitas inputan
+                    rank_kampus = df_temp.loc[df_temp["institution"] == nama_kampus, "rank_prediksi"].values[0]
+
+                    st.success(f"🎓 **{nama_kampus}** diprediksi memperoleh Overall Score: **{prediksi:.2f}** dan berada di peringkat **{rank_kampus}** (2026)")
+
 
 # ------------------------
 # MENU 3: PERGESERAN PERINGKAT
