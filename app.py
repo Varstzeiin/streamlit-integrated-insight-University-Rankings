@@ -54,49 +54,59 @@ if uploaded_file:
     try:
         df_uploaded = pd.read_csv(uploaded_file)
 
-        # Kolom wajib & optional
-        required_cols = ["institution", "overall_score_2026"]
-        optional_cols = [
-            "academic_reputation_score", "employer_reputation_score",
-            "faculty_student_score", "citations_score",
-            "international_faculty_score", "international_student_score"
+        # === Kolom wajib ===
+        required_cols = [
+            "institution", 
+            "academic_reputation_score", 
+            "employer_reputation_score", 
+            "faculty_student_score", 
+            "citations_score"
         ]
 
-        # Cek kolom wajib
+        # === Kolom optional ===
+        optional_cols = [
+            "international_faculty_score", 
+            "international_student_score", 
+            "region", 
+            "country"
+        ]
+
+        # === Validasi kolom wajib ===
         missing_required = [col for col in required_cols if col not in df_uploaded.columns]
         if missing_required:
             st.sidebar.error(f"❌ File wajib punya kolom: {', '.join(missing_required)}")
         else:
-            # Cek optional
+            # === Info kolom optional ===
             available_optional = [col for col in optional_cols if col in df_uploaded.columns]
             missing_optional = [col for col in optional_cols if col not in df_uploaded.columns]
 
             st.sidebar.success(f"✅ Data tambahan dimuat: {df_uploaded.shape[0]} baris.")
+            
             if available_optional:
                 st.sidebar.info(f"✅ Kolom optional tersedia: {', '.join(available_optional)}")
             if missing_optional:
                 st.sidebar.info(f"ℹ️ Kolom optional tidak ada: {', '.join(missing_optional)}")
 
-            # Proses data
+            # === Tambahkan kolom untuk prediksi dan tahun ===
             df_uploaded["year"] = 2026
+            df_uploaded["overall_score_2026"] = np.nan  # Kosong, nanti diisi model
 
-            # Siapkan df_long
-            df_long = pd.melt(
-                df_uploaded,
-                id_vars=[col for col in df_uploaded.columns if not str(col).startswith("overall_score")],
-                value_vars=[col for col in df_uploaded.columns if str(col).startswith("overall_score")],
-                var_name="year",
-                value_name="overall_score"
-            )
+            # === Update df_raw ===
+            df_raw = df_uploaded.copy()
 
-            df_long["year"] = df_long["year"].str.extract(r"(\d{4})")
-            df_long["year"] = df_long["year"].fillna(2026).astype(int)
+            # === Buat df_long untuk visualisasi grafik line / bar ===
+            df_long = pd.DataFrame({
+                "institution": df_uploaded["institution"],
+                "year": df_uploaded["year"],
+                "overall_score": df_uploaded["overall_score_2026"]
+            })
 
-            # Update df_2026
-            df_2026 = df_uploaded[["institution", "overall_score_2026"]]
+            # === Siapkan df_2026 untuk ranking prediksi ===
+            df_2026 = df_uploaded[["institution", "overall_score_2026"] + available_optional]
 
     except Exception as e:
         st.sidebar.error(f"⚠️ Gagal membaca file: {e}")
+
 
 
 # ------------------------
