@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import numpy as np
+import os
 import joblib
 
 # ------------------------
@@ -10,6 +11,8 @@ import joblib
 # ------------------------
 df_raw = pd.read_csv("data_gabungan_lengkap.csv")
 df_2026 = pd.read_csv("New_overscore_all.csv")
+MODEL_FILENAME = "model_2026.pkl"
+MODEL_PATH = os.path.join(os.getcwd(), MODEL_FILENAME)
 
 # Konversi data wide -> long untuk keperluan Dashboard dan Dataset
 score_cols = [col for col in df_raw.columns if "overall_score_" in col]
