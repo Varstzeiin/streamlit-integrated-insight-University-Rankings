@@ -40,9 +40,10 @@ try:
         # Tidak menampilkan st.success agar UI bersih
         model_status_msg = ""  # tidak perlu pesan sukses
     else:
-        model_status_msg = f"❌ File model tidak ditemukan di: `{MODEL_FILENAME}`"
-except Exception as e:
-    model_status_msg = f"❌ Gagal load model: {str(e)}"
+        model_status_msg and model is None:
+    st.error(model_status_msg)
+# Tidak ada st.success dipanggil
+
 # ------------------------
 # Sidebar: Menu Navigasi
 # ------------------------
