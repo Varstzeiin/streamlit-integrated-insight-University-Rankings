@@ -1,4 +1,4 @@
-# app_unified.py (versi all-in-one dengan dropdown visualisasi prediksi)
+# app_unified.py
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -33,16 +33,12 @@ df_long = pd.melt(
 df_long["year"] = df_long["year"].str.extract(r"(\d{4})").astype(int)
 
 # Load model prediksi
-model = None  # Default None
+model = None
 try:
     if os.path.exists(MODEL_PATH):
         model = joblib.load(MODEL_PATH)
-        # Tidak menampilkan st.success agar UI bersih
-        model_status_msg = ""  # tidak perlu pesan sukses
-    else:
-        model_status_msg and model is None:
-    st.error(model_status_msg)
-# Tidak ada st.success dipanggil
+except Exception as e:
+    st.error(f"❌ Gagal load model: {str(e)}")
 
 # ------------------------
 # Sidebar: Menu Navigasi
@@ -96,23 +92,40 @@ elif menu == "Prediksi":
         st.error("Model belum tersedia. Pastikan model_2026.pkl berada di direktori.")
     else:
         with st.form("form_prediksi"):
-            st.subheader("📥 Masukkan Nilai Fitur:")
+            st.subheader("📥 Masukkan Data Universitas Baru:")
+
+            nama_uni = st.text_input("Nama Universitas (dummy saja)")
             col1, col2 = st.columns(2)
 
             with col1:
-                academic = st.number_input("Academic Reputation Score (Range 0-100)", 0.0, 100.0, step=0.1)
-                employer = st.number_input("Employer Reputation Score (Range 0-100)", 0.0, 100.0, step=0.1)
+                academic = st.number_input("Academic Reputation Score (0-100)", 0.0, 100.0, step=0.1)
+                employer = st.number_input("Employer Reputation Score (0-100)", 0.0, 100.0, step=0.1)
 
             with col2:
-                citations = st.number_input("Citations per Faculty (Range 0-100)", 0.0, 100.0, step=0.1)
-                faculty_student = st.number_input("Faculty Student Score (Range 0-100)", 0.0, 100.0, step=0.1)
+                citations = st.number_input("Citations per Faculty (0-100)", 0.0, 100.0, step=0.1)
+                faculty_student = st.number_input("Faculty Student Score (0-100)", 0.0, 100.0, step=0.1)
 
             submitted = st.form_submit_button("🔮 Prediksi Skor")
 
             if submitted:
                 fitur = np.array([[academic, employer, citations, faculty_student]])
                 prediksi = model.predict(fitur)[0]
+
+                # Gabung dengan data 2026 untuk hitung rank
+                df_temp = df_2026.copy()
+                df_temp = pd.concat([
+                    df_temp,
+                    pd.DataFrame({
+                        "institution": [nama_uni if nama_uni else "Universitas Baru"],
+                        "overall_score_2026": [prediksi]
+                    })
+                ], ignore_index=True)
+
+                df_temp["Rank_Prediksi"] = df_temp["overall_score_2026"].rank(ascending=False, method="min").astype(int)
+                rank_pred = df_temp[df_temp["institution"] == (nama_uni if nama_uni else "Universitas Baru")]["Rank_Prediksi"].values[0]
+
                 st.success(f"🎯 Prediksi Overall Score: **{prediksi:.2f}**")
+                st.info(f"🏅 Perkiraan Peringkat: **#{rank_pred} dari {len(df_temp)} universitas**")
 
 # ------------------------
 # MENU 3: PERGESERAN PERINGKAT
@@ -172,6 +185,3 @@ elif menu == "Tampilan Dataset":
 
     csv = df_filtered.to_csv(index=False).encode("utf-8")
     st.download_button("📥 Unduh Data (CSV)", csv, file_name="filtered_university_data.csv", mime="text/csv")
-
-# menjalankannya 
-# streamlit run D:\Bootcamp-Offline-Bdg\Offline_Bootcamp[14]-Streamlit-Web_Rank_Univ\app.py
