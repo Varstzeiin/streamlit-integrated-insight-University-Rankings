@@ -14,7 +14,6 @@ df_2026 = pd.read_csv("New_overscore_all.csv")
 MODEL_FILENAME = "model_2026.pkl"
 MODEL_PATH = os.path.join(os.getcwd(), MODEL_FILENAME)
 
-# Konversi data wide -> long untuk keperluan Dashboard dan Dataset
 score_cols = [col for col in df_raw.columns if "overall_score_" in col]
 df_long = pd.melt(
     df_raw,
@@ -43,12 +42,43 @@ except Exception as e:
 # ------------------------
 # Sidebar: Menu Navigasi
 # ------------------------
-menu = st.sidebar.radio("Pilih Menu", ["Dashboard", "Prediksi", "Pergeseran Peringkat", "Tampilan Dataset"])
+menu = st.sidebar.radio("Pilih Menu", ["Home", "Dashboard", "Prediksi", "Pergeseran Peringkat", "Tampilan Dataset"])
 
 # ------------------------
-# MENU 1: DASHBOARD
+# MENU HOME
 # ------------------------
-if menu == "Dashboard":
+if menu == "Home":
+    st.title("🌐 University Rankings & Performance Dashboard")
+    
+    st.image("Kampus.png", use_column_width=True, caption="Ilustrasi Kampus dan Peringkat")
+
+    st.markdown("""
+    ## Latar Belakang  
+    Aplikasi ini dikembangkan untuk menganalisis dan memprediksi peringkat universitas global berdasarkan indikator kinerja akademik dan riset.  
+    Hasil analisis mendukung pengambilan keputusan strategis dalam penyusunan program beasiswa, kolaborasi, outsourcing, serta pengembangan talenta masa depan.  
+    
+    ## Tujuan  
+    - Menyusun prediksi peringkat universitas global untuk 2025 dan 2026.  
+    - Menggali insight utama untuk mendukung strategi kolaborasi dan rekrutmen.
+    
+    ## Sumber & Transformasi Data  
+    Data berasal dari peringkat universitas global tahun 2018, 2019, 2021, 2023, 2024, dan 2025.  
+    Data memuat skor keseluruhan, reputasi akademik & pemberi kerja, rasio dosen-mahasiswa, intensitas riset, hingga keberadaan mahasiswa/staf internasional.  
+    Data terbaru digunakan untuk validasi & proyeksi.
+    
+    ## Indikator Penilaian  
+    - **Academic Reputation Score:** Survei global terhadap akademisi tentang kualitas institusi.  
+    - **Employer Reputation Score:** Survei pemberi kerja terkait lulusan terbaik.  
+    - **Citations per Faculty:** Jumlah sitasi publikasi ilmiah dibagi jumlah staf pengajar.  
+    - **Faculty Student Score:** Rasio jumlah staf pengajar terhadap mahasiswa.  
+    
+    Semua skor diperoleh dari data QS World University Rankings dan sumber data publik sejenis yang mempublikasikan kinerja universitas.
+    """)
+
+# ------------------------
+# MENU DASHBOARD
+# ------------------------
+elif menu == "Dashboard":
     st.title("📊 Dashboard Peringkat Universitas")
 
     st.sidebar.header("Filter Tahun")
@@ -83,7 +113,7 @@ if menu == "Dashboard":
     st.plotly_chart(fig2, use_container_width=True)
 
 # ------------------------
-# MENU 2: PREDIKSI
+# MENU PREDIKSI
 # ------------------------
 elif menu == "Prediksi":
     st.title("🧠 Prediksi Overall Score Universitas Baru")
@@ -113,7 +143,6 @@ elif menu == "Prediksi":
                     fitur = np.array([[academic, employer, citations, faculty_student]])
                     prediksi = model.predict(fitur)[0]
 
-                    # Gabung data 2026 + prediksi
                     df_temp = df_2026.copy()
                     df_temp = pd.concat([df_temp, pd.DataFrame({
                         "institution": [nama_kampus],
@@ -121,17 +150,14 @@ elif menu == "Prediksi":
                     })], ignore_index=True)
 
                     df_temp["rank_prediksi"] = df_temp["overall_score_2026"].rank(ascending=False, method="min").astype(int)
-
-                    # Ambil rank prediksi
                     rank_pred = df_temp.loc[df_temp["institution"] == nama_kampus, "rank_prediksi"].values[0]
 
-                    # Tampilkan hasil
                     st.success(f"🎯 Prediksi Overall Score: **{prediksi:.2f}**")
                     st.info(f"🏅 Perkiraan Peringkat: **#{rank_pred} dari {len(df_temp)} universitas**")
                     st.markdown(f"🎓 **{nama_kampus}** diprediksi memperoleh Overall Score **{prediksi:.2f}** dan berada di peringkat **{rank_pred}** di tahun 2026.")
 
 # ------------------------
-# MENU 3: PERGESERAN PERINGKAT
+# MENU PERGESERAN PERINGKAT
 # ------------------------
 elif menu == "Pergeseran Peringkat":
     st.title("📊 Pergeseran Peringkat Universitas Top 10")
@@ -163,7 +189,7 @@ elif menu == "Pergeseran Peringkat":
     st.plotly_chart(fig_top, use_container_width=True)
 
 # ------------------------
-# MENU 4: TAMPILAN DATASET
+# MENU TAMPILAN DATASET
 # ------------------------
 elif menu == "Tampilan Dataset":
     st.title("📄 Dataset Peringkat Universitas (2018–2026)")
